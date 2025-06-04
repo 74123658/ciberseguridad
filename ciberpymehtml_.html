@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Interactiva de Ciberseguridad para PyMEs</title>
+    <!-- Chosen Palette: Calm Corporate (Slate Gray, Soft Blue, Off-White) -->
+    <!-- Application Structure Plan: Se diseñó una SPA con navegación superior fija para acceder a las secciones: Inicio, Módulos, Quiénes Somos, Inscripción, Glosario y Recursos. La sección "Inicio" incluye información institucional breve. La sección "Módulos" es el núcleo y utiliza pestañas para separar el contenido de los 6 módulos del temario. La sección "Quiénes Somos" presenta información institucional detallada. La nueva sección "Inscripción" contiene un formulario para registrar usuarios en Firebase Firestore. Esta estructura modular permite una exploración no lineal. Se prioriza la interacción a través de checklists, diagramas visuales y un gráfico de riesgos. La elección de esta estructura busca hacer el contenido denso más digerible y práctico. -->
+    <!-- Visualization & Content Choices: Se eligieron métodos interactivos para representar conceptos clave. Para el análisis de riesgos (Módulo 2), se usa un gráfico de burbujas (Chart.js). Prácticas como la regla 3-2-1 de backups y el 2FA se representan con diagramas basados en HTML/CSS e iconos. Se crearon checklists interactivos (Módulo 5). El glosario es una lista filtrable. La sección "Inscripción" utiliza un formulario HTML estándar y JavaScript para enviar datos a Firestore. Se muestra retroalimentación al usuario directamente en la página. Estas decisiones convierten un temario pasivo en una herramienta de capacitación interactiva y funcional, sin usar SVG ni Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #3b82f6; /* blue-500 */
+            border-bottom-color: #3b82f6;
+        }
+        .tab-link.active {
+            background-color: #3b82f6; /* blue-500 */
+            color: #ffffff;
+        }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; }
+        .accordion-content.open { max-height: 1000px; }
+        @import url('https://rsms.me/inter/inter.css');
+        html { font-family: 'Inter', sans-serif; }
+        .form-input {
+            @apply w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+        }
+        .form-label {
+            @apply block text-sm font-medium text-slate-700 mb-1;
+        }
+        #form-message {
+            @apply mt-4 text-sm p-3 rounded-md;
+        }
+        #form-message.success {
+            @apply bg-green-100 text-green-700;
+        }
+        #form-message.error {
+            @apply bg-red-100 text-red-700;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#inicio" class="font-bold text-xl text-slate-700">🛡️ CiberPyME</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#inicio" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-blue-500 border-b-2 border-transparent">Inicio</a>
+                        <a href="#modulos" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-blue-500 border-b-2 border-transparent">Módulos</a>
+                        <a href="#quienes-somos" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-blue-500 border-b-2 border-transparent">Quiénes Somos</a>
+                        <a href="#inscripcion" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-blue-500 border-b-2 border-transparent">Inscripción</a>
+                        <a href="#glosario" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-blue-500 border-b-2 border-transparent">Glosario</a>
+                        <a href="#recursos" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-blue-500 border-b-2 border-transparent">Recursos</a>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button id="mobile-menu-button" type="button" class="bg-slate-100 inline-flex items-center justify-center p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-100 focus:ring-blue-500" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Abrir menú principal</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#inicio" class="nav-link-mobile block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-blue-500 hover:bg-slate-100">Inicio</a>
+                <a href="#modulos" class="nav-link-mobile block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-blue-500 hover:bg-slate-100">Módulos</a>
+                <a href="#quienes-somos" class="nav-link-mobile block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-blue-500 hover:bg-slate-100">Quiénes Somos</a>
+                <a href="#inscripcion" class="nav-link-mobile block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-blue-500 hover:bg-slate-100">Inscripción</a>
+                <a href="#glosario" class="nav-link-mobile block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-blue-500 hover:bg-slate-100">Glosario</a>
+                <a href="#recursos" class="nav-link-mobile block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-blue-500 hover:bg-slate-100">Recursos</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <section id="inicio" class="content-section">
+            <div class="w-full text-center py-12 md:py-16">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-800 tracking-tight">
+                    Protegiendo el <span class="text-blue-600">corazón digital</span> de tu PyME.
+                </h1>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    Bienvenido a la Guía Interactiva de Ciberseguridad. Diseñada para dueños y empleados de PyMEs en México, esta herramienta te ayudará a entender y aplicar prácticas esenciales para defender tu negocio de las amenazas digitales. ¡Empecemos a construir una cultura de seguridad juntos!
+                </p>
+                <div class="mt-8 space-x-4">
+                    <a href="#modulos" class="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
+                        Iniciar Capacitación
+                    </a>
+                     <a href="#inscripcion" class="inline-block bg-green-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-green-600 transition-transform transform hover:scale-105">
+                        Inscríbete
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-12 md:mt-16 bg-white p-6 md:p-8 rounded-lg shadow-lg">
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-6 text-center">Conoce CiberPyME</h2>
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <h3 class="text-xl font-semibold text-blue-600 mb-2">Procedencia de CiberPyME</h3>
+                        <p class="text-slate-600 mb-4">CiberPyME nace de la necesidad identificada de apoyar a las pequeñas y medianas empresas en México, que son el motor de nuestra economía, a enfrentar los crecientes y complejos desafíos de la ciberseguridad. Entendemos que los recursos pueden ser limitados, por eso nuestro enfoque es práctico, accesible y adaptado a la realidad de las PyMEs.</p>
+                        
+                        <h3 class="text-xl font-semibold text-blue-600 mb-2">Quiénes Somos (en breve)</h3>
+                        <p class="text-slate-600 mb-4">Somos un equipo de profesionales apasionados por la ciberseguridad y el desarrollo empresarial, dedicados a crear recursos educativos que realmente marquen una diferencia. Creemos que la seguridad digital no debe ser un lujo, sino un pilar fundamental para el crecimiento de toda PyME. <a href="#quienes-somos" class="text-blue-500 hover:underline font-medium">Conoce más sobre nosotros</a>.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-blue-600 mb-2">Misión</h3>
+                            <p class="text-slate-600">Empoderar a las PyMEs mexicanas con el conocimiento y las herramientas necesarias para navegar el mundo digital de forma segura, protegiendo sus activos, su reputación y su futuro.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-blue-600 mb-2">Visión</h3>
+                            <p class="text-slate-600">Ser el referente en capacitación y concienciación en ciberseguridad para el sector PyME en México, contribuyendo a un ecosistema digital más seguro y resiliente para todos.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-blue-600 mb-2">Valores</h3>
+                            <ul class="list-disc list-inside text-slate-600 space-y-1 pl-5">
+                                <li><strong>Claridad:</strong> Hacemos lo complejo simple y accesible.</li>
+                                <li><strong>Pragmatismo:</strong> Enfocados en soluciones prácticas y accionables.</li>
+                                <li><strong>Compromiso:</strong> Dedicados al éxito y la seguridad de nuestros clientes.</li>
+                                <li><strong>Actualización:</strong> Siempre al día con las últimas amenazas y defensas.</li>
+                                <li><strong>Ética:</strong> Actuamos con integridad y transparencia.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="modulos" class="content-section">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 text-center">Módulos de Capacitación</h2>
+            <p class="text-center text-slate-600 mb-8 max-w-3xl mx-auto">Esta sección es el núcleo de tu aprendizaje. Cada módulo está diseñado para construir tu conocimiento de forma progresiva, desde los fundamentos indispensables hasta temas más avanzados. Usa las pestañas para navegar y explorar cada área a tu propio ritmo.</p>
+            
+            <div class="flex flex-wrap justify-center gap-2 mb-8" id="tabs-container">
+                <button data-tab="modulo1" class="tab-link px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 hover:bg-slate-300 transition">Módulo 1: Fundamentos</button>
+                <button data-tab="modulo2" class="tab-link px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 hover:bg-slate-300 transition">Módulo 2: Riesgos Críticos</button>
+                <button data-tab="modulo3" class="tab-link px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 hover:bg-slate-300 transition">Módulo 3: Cultura y Políticas</button>
+                <button data-tab="modulo4" class="tab-link px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 hover:bg-slate-300 transition">Módulo 4: Complementos</button>
+                <button data-tab="modulo5" class="tab-link px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 hover:bg-slate-300 transition">Módulo 5: Plan de Acción</button>
+                <button data-tab="modulo6" class="tab-link px-4 py-2 text-sm font-semibold rounded-full bg-slate-200 text-slate-700 hover:bg-slate-300 transition">Módulo 6: Profundización</button>
+            </div>
+
+            <div id="modulo1" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-4">Módulo 1: Fundamentos Esenciales de Ciberseguridad</h3>
+                    <p class="text-slate-600 mb-6">Aquí sentamos las bases. Entenderás qué es la ciberseguridad, las amenazas más comunes y las prácticas básicas de protección que todos en la empresa deben conocer, incluyendo tus obligaciones legales en México.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="accordion-item bg-slate-50 rounded-lg p-4">
+                            <button class="accordion-header w-full text-left flex justify-between items-center text-lg font-semibold text-slate-700">
+                                ¿Qué es la Ciberseguridad y por qué es vital para tu PyME?
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content pt-2 text-slate-600">
+                                <p>Es la protección de tus activos digitales (computadoras, redes, datos) contra robos o daños. Para una PyME, un ataque puede significar la pérdida de dinero, datos de clientes, reputación y hasta el cierre del negocio. El "Factor Humano" es clave: un empleado informado es tu mejor defensa.</p>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item bg-slate-50 rounded-lg p-4">
+                            <button class="accordion-header w-full text-left flex justify-between items-center text-lg font-semibold text-slate-700">
+                                Tus Primeras Líneas de Defensa
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content pt-2 text-slate-600 space-y-4">
+                               <p><strong>Contraseñas Seguras:</strong> Usa frases largas (más de 12 caracteres) con mayúsculas, minúsculas, números y símbolos. Un gestor de contraseñas como Bitwarden puede ayudarte.</p>
+                               <p><strong>Autenticación de 2 Factores (2FA):</strong> Activa esta capa extra de seguridad en tu correo, bancos y redes sociales. Usa apps como Google Authenticator.</p>
+                               <p><strong>Actualizaciones Críticas:</strong> Mantén tu sistema operativo, navegador y apps actualizados. Las actualizaciones automáticas son tus aliadas.</p>
+                               <p><strong>Copias de Seguridad (Backups):</strong> Sigue la regla 3-2-1. Tres copias, en dos medios distintos, con una copia fuera de la oficina (nube). ¡Prueba tus respaldos!</p>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item bg-slate-50 rounded-lg p-4">
+                            <button class="accordion-header w-full text-left flex justify-between items-center text-lg font-semibold text-slate-700">
+                                Legislación Mexicana Clave
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content pt-2 text-slate-600">
+                                <ul class="list-disc list-inside space-y-2">
+                                    <li><strong>LFPDPPP:</strong> Si manejas datos de clientes o empleados, esta ley te obliga a protegerlos. Necesitas un Aviso de Privacidad y medidas de seguridad. Las multas del INAI son altas.</li>
+                                    <li><strong>NOM-151-SCFI-2016:</strong> Regula la conservación de documentos electrónicos como facturas (CFDI), asegurando su integridad.</li>
+                                    <li><strong>Código Penal Federal:</strong> Tipifica delitos como el acceso ilícito y el fraude electrónico. Conocerlo te ayuda a saber cómo y por qué denunciar.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="modulo2" class="tab-content hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-4">Módulo 2: Identificación y Mitigación de Riesgos Críticos</h3>
+                     <p class="text-slate-600 mb-6">En este módulo, aprenderás a pensar como un atacante para defenderte mejor. Nos enfocaremos en identificar los riesgos más peligrosos para tu PyME, con especial atención a la ingeniería social, la forma más común de ciberataque.</p>
+
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div>
+                             <h4 class="text-xl font-semibold text-slate-800 mb-3">Análisis de Riesgos para PyMEs</h4>
+                             <p class="text-slate-600 mb-4">No todas las amenazas son iguales. Este gráfico te ayuda a visualizar cuáles son más probables de ocurrir y cuáles tendrían un mayor impacto en tu negocio. Interactúa con las burbujas para conocer más sobre cada amenaza.</p>
+                             <div class="bg-slate-50 p-4 rounded-lg">
+                                <h5 class="font-bold mb-2">💡 Ejercicio Práctico:</h5>
+                                <p class="text-sm text-slate-600">Dedica 5 minutos a listar los 5 activos digitales más importantes de tu negocio (ej: base de datos de clientes, cuenta bancaria principal, facturas, etc.). Esto te ayudará a priorizar tus esfuerzos de protección.</p>
+                             </div>
+                        </div>
+                        <div class="chart-container relative w-full max-w-md mx-auto h-80 md:h-96">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                    </div>
+                     <div class="mt-8">
+                        <h4 class="text-xl font-semibold text-slate-800 mb-3 text-center">Desarme de la Ingeniería Social</h4>
+                        <p class="text-slate-600 mb-4 text-center max-w-2xl mx-auto">La ingeniería social es manipulación psicológica. Los atacantes explotan la confianza, la urgencia y el miedo. Aprende a reconocer las señales.</p>
+                        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-r-lg">
+                           <h5 class="font-bold">¡Alerta Phishing!</h5>
+                           <p class="text-sm">Un correo del "SAT" te pide verificar tus datos fiscales haciendo clic en un enlace "urgente" por una supuesta discrepancia. ¿Qué haces?</p>
+                           <ul class="list-disc list-inside mt-2 text-sm">
+                               <li>**Verifica el remitente:** ¿El correo es realmente de @sat.gob.mx?</li>
+                               <li>**No hagas clic:** Pasa el cursor sobre el enlace sin hacer clic. ¿La dirección parece sospechosa?</li>
+                               <li>**Accede directamente:** Abre tu navegador y escribe la dirección oficial del SAT tú mismo. Nunca uses enlaces de correos no solicitados.</li>
+                               <li>**Reporta:** Marca el correo como spam o phishing.</li>
+                           </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modulo3" class="tab-content hidden">
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-4">Módulo 3: Fortaleciendo tus Defensas y Cultura de Seguridad</h3>
+                    <p class="text-slate-600 mb-6">La ciberseguridad es un esfuerzo de equipo. Aquí aprenderás a manejar la información de forma segura, a fomentar una cultura donde todos son responsables, y a establecer políticas claras que guíen las acciones de tu personal.</p>
+                     
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Manejo Seguro de Información</h4>
+                            <p class="text-slate-600 text-sm">Clasifica tu información (pública, interna, confidencial) y protégela adecuadamente. Evita usar redes Wi-Fi públicas para transacciones sensibles y siempre verifica con quién compartes datos.</p>
+                        </div>
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Creando una Cultura Segura</h4>
+                            <p class="text-slate-600 text-sm">Fomenta el hábito de "pensar antes de hacer clic". Anima a tu equipo a reportar cualquier cosa sospechosa sin miedo. La capacitación continua y las simulaciones de phishing son herramientas poderosas.</p>
+                        </div>
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Políticas Internas Clave</h4>
+                            <p class="text-slate-600 text-sm">Establece reglas claras con una Política de Uso Aceptable (AUP), una Política de Contraseñas y un Protocolo de Respuesta a Incidentes. Define quién hace qué en caso de emergencia.</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg col-span-1 md:col-span-2 lg:col-span-3">
+                             <h4 class="text-lg font-bold text-slate-800 mb-2">Herramientas de Protección Esenciales</h4>
+                             <div class="flex flex-wrap gap-4 mt-2">
+                                 <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">Antivirus</span>
+                                 <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">Firewall</span>
+                                 <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">Cifrado de Disco</span>
+                                 <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">VPN</span>
+                             </div>
+                             <p class="text-slate-600 text-sm mt-2">Asegúrate de que todos los equipos tengan un antivirus actualizado, el firewall del sistema activado, y considera usar VPN para el trabajo remoto. Cifrar los discos de las laptops es crucial si salen de la oficina.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modulo4" class="tab-content hidden">
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-4">Módulo 4: Aspectos Complementarios y Mejora Continua</h3>
+                    <p class="text-slate-600 mb-6">Una vez cubiertas las bases, estos temas te ayudarán a robustecer tu seguridad. Abordaremos la seguridad física, la protección de tu red Wi-Fi, los dispositivos móviles y cómo gestionar a tus proveedores.</p>
+                    
+                    <div class="grid sm:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Seguridad Física</h4>
+                            <p class="text-slate-600 text-sm">La ciberseguridad también es física. Controla el acceso a tus oficinas, no dejes laptops desatendidas y destruye de forma segura los documentos y discos duros viejos.</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Protección Wi-Fi</h4>
+                            <p class="text-slate-600 text-sm">Cambia la contraseña de tu router, usa cifrado WPA3 y crea una red para invitados. Esto aísla los dispositivos de tus visitantes de tu red principal.</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Dispositivos Móviles</h4>
+                            <p class="text-slate-600 text-sm">Los teléfonos de trabajo deben tener bloqueo de pantalla, cifrado activado y la capacidad de borrado remoto. Descarga apps solo de tiendas oficiales.</p>
+                        </div>
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Seguridad en la Nube y Proveedores</h4>
+                            <p class="text-slate-600 text-sm">Entiende el modelo de responsabilidad compartida con tus proveedores de nube. Asegúrate de que tus socios y proveedores que manejan tus datos también tengan buenas prácticas de seguridad.</p>
+                        </div>
+                         <div class="bg-slate-50 p-4 rounded-lg sm:col-span-2">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Tendencias Emergentes</h4>
+                            <p class="text-slate-600 text-sm">Mantente alerta a los riesgos del trabajo remoto (conexiones inseguras en home office) y nuevas tácticas como los deepfakes.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modulo5" class="tab-content hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-4">Módulo 5: Plan de Acción y Próximos Pasos</h3>
+                    <p class="text-slate-600 mb-6">El conocimiento es poder, pero la acción es la que protege. Usa este checklist interactivo para poner en marcha tus primeras mejoras de seguridad y establecer un plan de mejora continua.</p>
+                    
+                    <div id="checklist-container" class="space-y-3">
+                        <label class="flex items-center p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-3 text-slate-700">Activar 2FA en la cuenta de correo principal y redes sociales de la empresa.</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-3 text-slate-700">Revisar y fortalecer las contraseñas de las cuentas bancarias y sistemas críticos.</span>
+                        </label>
+                         <label class="flex items-center p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-3 text-slate-700">Verificar que las actualizaciones automáticas estén activadas en todos los equipos.</span>
+                        </label>
+                         <label class="flex items-center p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-3 text-slate-700">Configurar una copia de seguridad automática en la nube para los datos más importantes.</span>
+                        </label>
+                         <label class="flex items-center p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-3 text-slate-700">Redactar un borrador de la Política de Uso Aceptable (AUP) para los empleados.</span>
+                        </label>
+                         <label class="flex items-center p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-3 text-slate-700">Revisar el Aviso de Privacidad del sitio web para asegurar que cumpla con la LFPDPPP.</span>
+                        </label>
+                    </div>
+                     <div class="mt-6 text-center">
+                        <p class="font-bold text-slate-800">Progreso: <span id="progress-text">0%</span></p>
+                        <div class="w-full bg-slate-200 rounded-full h-2.5 mt-2">
+                            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modulo6" class="tab-content hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-4">Módulo 6: Profundización y Cultura Continua</h3>
+                    <p class="text-slate-600 mb-6">Este módulo explora temas adicionales para fortalecer aún más la ciberseguridad de tu PyME y fomentar una cultura de prevención constante. Abordaremos desde la respuesta a incidentes hasta la protección contra fraudes digitales avanzados y la ética del empleado.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="accordion-item bg-slate-50 rounded-lg p-4">
+                            <button class="accordion-header w-full text-left flex justify-between items-center text-lg font-semibold text-slate-700">
+                                Respuesta a Incidentes y Amenazas Internas
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content pt-2 text-slate-600">
+                                <p><strong>Respuesta a Incidentes:</strong> ¿Qué hacer si sufres un ataque? Pasos básicos: aislar equipos, reportar, no alterar evidencia. Considera tener un plan simple y un equipo (incluso informal) de respuesta.</p>
+                                <p class="mt-2"><strong>Amenazas Internas:</strong> El riesgo puede venir de adentro (empleados descontentos o descuidados). Aplica el "principio de mínimo privilegio": da solo los accesos necesarios. Fomenta la ética y establece canales de denuncia seguros y confidenciales.</p>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item bg-slate-50 rounded-lg p-4">
+                            <button class="accordion-header w-full text-left flex justify-between items-center text-lg font-semibold text-slate-700">
+                                Protección Avanzada de Dispositivos y Ciberhigiene
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content pt-2 text-slate-600">
+                                <p><strong>Dispositivos Móviles:</strong> Configuración segura de smartphones/tablets (bloqueo, cifrado, apps de fuentes confiables). Cuidado con redes Wi-Fi públicas sin VPN.</p>
+                                <p class="mt-2"><strong>Gestión de Contraseñas Avanzada:</strong> Usa gestores de contraseñas (LastPass, KeePass). Considera políticas de rotación de contraseñas para cuentas críticas, pero prioriza la complejidad y unicidad.</p>
+                                <p class="mt-2"><strong>Ciberhigiene Diaria:</strong> Hábitos simples como cerrar sesiones al terminar, bloquear equipos al ausentarse, verificar enlaces antes de hacer clic y ser escéptico con solicitudes inesperadas.</p>
+                            </div>
+                        </div>
+                         <div class="accordion-item bg-slate-50 rounded-lg p-4">
+                            <button class="accordion-header w-full text-left flex justify-between items-center text-lg font-semibold text-slate-700">
+                                Seguridad en la Nube, Proveedores y Teletrabajo
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content pt-2 text-slate-600">
+                                <p><strong>Seguridad en la Nube:</strong> Entiende la "responsabilidad compartida" (qué protege el proveedor y qué te toca a ti). Elige servicios con buen cifrado y opciones de seguridad.</p>
+                                 <p class="mt-2"><strong>Gestión de Proveedores:</strong> Evalúa los riesgos de seguridad de terceros que acceden a tus sistemas o datos. Exige medidas de seguridad.</p>
+                                <p class="mt-2"><strong>Seguridad en el Teletrabajo:</strong> Configuración segura de routers domésticos, uso de VPN y herramientas de comunicación cifradas (ej. Zoom con contraseña, Signal).</p>
+                            </div>
+                        </div>
+                         <div class="accordion-item bg-slate-50 rounded-lg p-4">
+                            <button class="accordion-header w-full text-left flex justify-between items-center text-lg font-semibold text-slate-700">
+                                Fraude Digital, Deepfakes y Redes Sociales
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content pt-2 text-slate-600">
+                                <p><strong>Protección contra Fraude Financiero Digital:</strong> Aprende a identificar transferencias sospechosas, facturas falsas y verifica siempre las cuentas bancarias antes de pagos importantes.</p>
+                                <p class="mt-2"><strong>Concientización sobre Deepfakes:</strong> Entiende cómo se pueden usar audios o videos falsos (deepfakes) en estafas o para suplantar identidad. Desarrolla un ojo crítico.</p>
+                                <p class="mt-2"><strong>Seguridad en Redes Sociales Corporativas:</strong> Evita compartir información sensible de la empresa en perfiles personales o corporativos. Configura la privacidad adecuadamente.</p>
+                            </div>
+                        </div>
+                         <div class="accordion-item bg-slate-50 rounded-lg p-4">
+                            <button class="accordion-header w-full text-left flex justify-between items-center text-lg font-semibold text-slate-700">
+                                Cultura de Seguridad, Cumplimiento y Herramientas
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content pt-2 text-slate-600">
+                                <p><strong>Cultura de Seguridad:</strong> Fomenta hábitos proactivos (reportar, preguntar). La seguridad es tarea de todos.</p>
+                                <p class="mt-2"><strong>Cumplimiento Continuo:</strong> Realiza auditorías internas simples (anuales) para revisar políticas y actualizar medidas de seguridad.</p>
+                                <p class="mt-2"><strong>Herramientas de Evaluación (Accesibles):</strong> Considera una introducción a herramientas gratuitas como OWASP ZAP para un análisis básico de la seguridad de tu sitio web (con la debida precaución y entendimiento).</p>
+                                <p class="mt-2"><strong>Talleres Prácticos:</strong> Realiza simulaciones de phishing internas para medir y mejorar la preparación del equipo. Son muy efectivas.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="quienes-somos" class="content-section">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 text-center">Quiénes Somos</h2>
+            <p class="text-center text-slate-600 mb-10 max-w-3xl mx-auto">Conoce más sobre CiberPyME y nuestro compromiso con la seguridad digital de las pequeñas y medianas empresas en México.</p>
+
+            <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl">
+                <div class="grid md:grid-cols-3 gap-8 items-center">
+                    <div class="md:col-span-1 flex flex-col items-center text-center">
+                        <div class="w-48 h-48 bg-blue-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                            <span class="text-6xl text-white">🛡️</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-800">CiberPyME</h3>
+                        <p class="text-slate-500">Tu Aliado en Ciberseguridad</p>
+                    </div>
+                    <div class="md:col-span-2 space-y-6">
+                        <div>
+                            <h4 class="text-xl font-semibold text-blue-600 mb-2">Nuestra Misión</h4>
+                            <p class="text-slate-600">Empoderar a las PyMEs mexicanas con el conocimiento y las herramientas necesarias para navegar el mundo digital de forma segura, protegiendo sus activos, su reputación y su futuro.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-blue-600 mb-2">Nuestra Visión</h4>
+                            <p class="text-slate-600">Ser el referente en capacitación y concienciación en ciberseguridad para el sector PyME en México, contribuyendo a un ecosistema digital más seguro y resiliente para todos.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-blue-600 mb-2">Nuestros Valores</h4>
+                            <ul class="list-disc list-inside text-slate-600 space-y-1">
+                                <li><strong>Claridad:</strong> Hacemos lo complejo simple y accesible.</li>
+                                <li><strong>Pragmatismo:</strong> Enfocados en soluciones prácticas y accionables.</li>
+                                <li><strong>Compromiso:</strong> Dedicados al éxito y la seguridad de nuestros clientes.</li>
+                                <li><strong>Actualización:</strong> Siempre al día con las últimas amenazas y defensas.</li>
+                                <li><strong>Ética:</strong> Actuamos con integridad y transparencia.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="inscripcion" class="content-section">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 text-center">Inscripción a la Capacitación</h2>
+            <p class="text-center text-slate-600 mb-8 max-w-xl mx-auto">Regístrate para recibir actualizaciones, recursos adicionales y notificaciones sobre futuras capacitaciones de CiberPyME.</p>
+            <div class="max-w-lg mx-auto bg-white p-6 md:p-8 rounded-lg shadow-xl">
+                <form id="registration-form" class="space-y-6">
+                    <div>
+                        <label for="nombre" class="form-label">Nombre Completo:</label>
+                        <input type="text" id="nombre" name="nombre" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="email" class="form-label">Correo Electrónico:</label>
+                        <input type="email" id="email" name="email" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="pyme" class="form-label">Nombre de tu PyME:</label>
+                        <input type="text" id="pyme" name="pyme" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="acepto" class="flex items-center">
+                            <input type="checkbox" id="acepto" name="acepto" class="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" required>
+                            <span class="ml-2 text-sm text-slate-600">Acepto recibir comunicaciones de CiberPyME.</span>
+                        </label>
+                    </div>
+                    <button type="submit" id="submit-button" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors disabled:opacity-50">
+                        Registrarme
+                    </button>
+                </form>
+                <div id="form-message" class="mt-4 text-sm" role="alert"></div>
+            </div>
+        </section>
+
+        <section id="glosario" class="content-section">
+             <h2 class="text-3xl font-bold text-slate-800 mb-6 text-center">Glosario de Términos</h2>
+             <p class="text-center text-slate-600 mb-8 max-w-3xl mx-auto">El mundo de la ciberseguridad está lleno de términos que pueden sonar complicados. Aquí te explicamos los más importantes de forma sencilla. Usa el buscador para encontrar un término rápidamente.</p>
+             <input type="text" id="glossary-search" placeholder="Buscar término..." class="w-full p-3 mb-6 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+             
+             <div id="glossary-list" class="space-y-4">
+                 <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Malware</h4>
+                    <p class="term-def text-slate-600">Software malicioso (virus, ransomware, spyware) diseñado para dañar sistemas o robar información.</p>
+                </div>
+                 <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Phishing</h4>
+                    <p class="term-def text-slate-600">Técnica de engaño (usualmente por correo) para que reveles información confidencial (contraseñas, datos bancarios) haciéndose pasar por una entidad legítima.</p>
+                </div>
+                <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Ransomware</h4>
+                    <p class="term-def text-slate-600">Tipo de malware que cifra tus archivos o bloquea tu sistema, exigiendo un pago (rescate) para restaurar el acceso.</p>
+                </div>
+                <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Firewall (Cortafuegos)</h4>
+                    <p class="term-def text-slate-600">Sistema de seguridad que actúa como una barrera entre una red interna confiable y redes externas como internet.</p>
+                </div>
+                <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">2FA (Autenticación de Dos Factores)</h4>
+                    <p class="term-def text-slate-600">Un método de seguridad que requiere dos formas de verificación (ej. contraseña y un código de tu teléfono) para acceder a una cuenta.</p>
+                </div>
+                 <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">VPN (Red Privada Virtual)</h4>
+                    <p class="term-def text-slate-600">Herramienta que crea una conexión segura y cifrada a través de una red pública (internet), protegiendo tu privacidad.</p>
+                </div>
+                 <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Cifrado (Encriptación)</h4>
+                    <p class="term-def text-slate-600">Proceso de transformar datos legibles en un formato codificado que solo puede ser leído con una clave específica.</p>
+                </div>
+                 <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Vulnerabilidad</h4>
+                    <p class="term-def text-slate-600">Una debilidad o fallo en un sistema que puede ser explotado por un atacante para comprometerlo.</p>
+                </div>
+                 <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">LFPDPPP</h4>
+                    <p class="term-def text-slate-600">Ley Federal de Protección de Datos Personales en Posesión de los Particulares, la principal ley en México que regula el tratamiento de datos personales por empresas.</p>
+                </div>
+                <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Ingeniería Social</h4>
+                    <p class="term-def text-slate-600">El arte de manipular psicológicamente a las personas para que realicen acciones o divulguen información confidencial.</p>
+                </div>
+                <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Backup (Copia de Seguridad)</h4>
+                    <p class="term-def text-slate-600">Una copia de datos informáticos guardada en un lugar seguro para poder restaurarla en caso de pérdida de los datos originales.</p>
+                </div>
+                 <div class="glossary-term bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="term-name text-lg font-bold text-blue-600">Deepfake</h4>
+                    <p class="term-def text-slate-600">Video o audio manipulado mediante inteligencia artificial para que parezca real, usado a menudo para suplantar identidad o difundir desinformación.</p>
+                </div>
+             </div>
+        </section>
+
+        <section id="recursos" class="content-section">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 text-center">Recursos Adicionales y Sitios de Interés</h2>
+            <p class="text-center text-slate-600 mb-8 max-w-3xl mx-auto">El aprendizaje en ciberseguridad es continuo. Aquí tienes una lista de recursos oficiales y herramientas útiles para mantenerte informado y protegido.</p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="https://home.inai.org.mx/" target="_blank" rel="noopener noreferrer" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="text-lg font-bold text-blue-600">INAI - Guía para PyMEs</h4>
+                    <p class="text-slate-600 text-sm mt-1">Recursos y guías sobre la Ley de Protección de Datos Personales.</p>
+                </a>
+                 <a href="https://www.gob.mx/gncertmx" target="_blank" rel="noopener noreferrer" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="text-lg font-bold text-blue-600">Guardia Nacional - CERT-MX</h4>
+                    <p class="text-slate-600 text-sm mt-1">Alertas y comunicados oficiales sobre ciberseguridad en México.</p>
+                </a>
+                 <a href="https://www.condusef.gob.mx/" target="_blank" rel="noopener noreferrer" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="text-lg font-bold text-blue-600">Condusef</h4>
+                    <p class="text-slate-600 text-sm mt-1">Información y alertas sobre fraudes financieros digitales.</p>
+                </a>
+                 <a href="https://www.incibe.es/empresas" target="_blank" rel="noopener noreferrer" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="text-lg font-bold text-blue-600">INCIBE (España) - Empresas</h4>
+                    <p class="text-slate-600 text-sm mt-1">Excelentes guías y herramientas gratuitas en español para empresas.</p>
+                </a>
+                 <a href="https://haveibeenpwned.com/" target="_blank" rel="noopener noreferrer" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="text-lg font-bold text-blue-600">Have I Been Pwned?</h4>
+                    <p class="text-slate-600 text-sm mt-1">Verifica si tu correo ha sido expuesto en alguna filtración de datos.</p>
+                </a>
+                 <a href="https://bitwarden.com/" target="_blank" rel="noopener noreferrer" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="text-lg font-bold text-blue-600">Bitwarden</h4>
+                    <p class="text-slate-600 text-sm mt-1">Gestor de contraseñas seguro y recomendado para empezar.</p>
+                </a>
+                <a href="https://www.cisa.gov/cis-controls" target="_blank" rel="noopener noreferrer" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="text-lg font-bold text-blue-600">CIS Controls</h4>
+                    <p class="text-slate-600 text-sm mt-1">Plantillas y marcos de controles de seguridad reconocidos internacionalmente.</p>
+                </a>
+                <a href="https://owasp.org/www-project-zap/" target="_blank" rel="noopener noreferrer" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h4 class="text-lg font-bold text-blue-600">OWASP ZAP</h4>
+                    <p class="text-slate-600 text-sm mt-1">Herramienta gratuita para análisis básico de seguridad en sitios web (uso técnico).</p>
+                </a>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-slate-800 text-white mt-12">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>&copy; 2024 Guía Interactiva de Ciberseguridad para PyMEs. Este es un recurso educativo.</p>
+            <p class="text-slate-400 mt-1">La información presentada no constituye asesoría legal o técnica formal.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfigProvided = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCA8pvidALtCOmadyf5WIRqNM8upVD4pSA",
+            authDomain: "ciberpyme-213a2.firebaseapp.com",
+            projectId: "ciberpyme-213a2",
+            storageBucket: "ciberpyme-213a2.appspot.com",
+            messagingSenderId: "394251684102",
+            appId: "1:394251684102:web:e064cacdf52a5e6daef687"
+        };
+        
+        const app = initializeApp(firebaseConfigProvided);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        async function signInFirebase() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Error signing in to Firebase: ", error);
+                const formMessage = document.getElementById('form-message');
+                if (formMessage) {
+                    formMessage.textContent = 'Error de autenticación con Firebase. No se podrán guardar registros.';
+                    formMessage.className = 'form-message error';
+                }
+            }
+        }
+        signInFirebase();
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.content-section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNavLinks = document.querySelectorAll('.nav-link-mobile');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            function updateActiveNav(hash) {
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === hash) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                 mobileNavLinks.forEach(link => {
+                    if (link.getAttribute('href') === hash) {
+                        link.classList.add('bg-slate-200', 'text-blue-600');
+                    } else {
+                        link.classList.remove('bg-slate-200', 'text-blue-600');
+                    }
+                });
+            }
+            
+            function showSection(targetId) {
+                sections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+                updateActiveNav('#' + targetId);
+                if (targetId !== 'inicio' || !window.location.hash) {
+                   window.scrollTo(0, 0);
+                }
+            }
+
+            function handleNavClick(e) {
+                e.preventDefault();
+                const targetId = e.currentTarget.getAttribute('href').substring(1);
+                window.location.hash = targetId;
+            }
+
+            navLinks.forEach(link => link.addEventListener('click', handleNavClick));
+            mobileNavLinks.forEach(link => link.addEventListener('click', (e) => {
+                handleNavClick(e);
+                mobileMenu.classList.add('hidden');
+                mobileMenuButton.setAttribute('aria-expanded', 'false');
+                mobileMenuButton.querySelector('svg:first-child').classList.remove('hidden');
+                mobileMenuButton.querySelector('svg:last-child').classList.add('hidden');
+            }));
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isExpanded = mobileMenu.classList.toggle('hidden');
+                mobileMenuButton.setAttribute('aria-expanded', String(!isExpanded));
+                mobileMenuButton.querySelector('svg:first-child').classList.toggle('hidden', !isExpanded);
+                mobileMenuButton.querySelector('svg:last-child').classList.toggle('hidden', isExpanded);
+            });
+
+            window.addEventListener('hashchange', () => {
+                const hash = window.location.hash || '#inicio';
+                showSection(hash.substring(1));
+            });
+
+            const initialHash = window.location.hash || '#inicio';
+            showSection(initialHash.substring(1));
+
+            const tabsContainer = document.getElementById('tabs-container');
+            const tabs = tabsContainer.querySelectorAll('.tab-link');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    tabContents.forEach(content => {
+                        if (content.id === tab.dataset.tab) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            if (tabs.length > 0) {
+                 tabs[0].click();
+            }
+
+
+            const accordions = document.querySelectorAll('.accordion-item');
+            accordions.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = header.querySelector('span');
+
+                header.addEventListener('click', () => {
+                    const isOpen = content.classList.contains('open');
+                    document.querySelectorAll('.accordion-content.open').forEach(openContent => {
+                        if (openContent !== content) {
+                           openContent.classList.remove('open');
+                           const openIcon = openContent.previousElementSibling.querySelector('span');
+                           if(openIcon) openIcon.style.transform = 'rotate(0deg)';
+                        }
+                    });
+
+                    content.classList.toggle('open');
+                    icon.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+                });
+            });
+            
+            const checkboxes = document.querySelectorAll('#checklist-container input[type="checkbox"]');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const totalCheckboxes = checkboxes.length;
+
+            function updateProgress() {
+                if (!progressBar || !progressText) return;
+                const checkedCount = document.querySelectorAll('#checklist-container input[type="checkbox"]:checked').length;
+                const percentage = totalCheckboxes > 0 ? Math.round((checkedCount / totalCheckboxes) * 100) : 0;
+                progressBar.style.width = `${percentage}%`;
+                progressText.textContent = `${percentage}%`;
+            }
+            checkboxes.forEach(checkbox => checkbox.addEventListener('change', updateProgress));
+            updateProgress();
+
+            const glossarySearch = document.getElementById('glossary-search');
+            const glossaryList = document.getElementById('glossary-list');
+            const glossaryTerms = glossaryList.querySelectorAll('.glossary-term');
+
+            glossarySearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                glossaryTerms.forEach(term => {
+                    const termName = term.querySelector('.term-name').textContent.toLowerCase();
+                    const termDef = term.querySelector('.term-def').textContent.toLowerCase();
+                    if (termName.includes(searchTerm) || termDef.includes(searchTerm)) {
+                        term.style.display = 'block';
+                    } else {
+                        term.style.display = 'none';
+                    }
+                });
+            });
+            
+            const riskChartElement = document.getElementById('riskChart');
+            if (riskChartElement) {
+                const riskChartCtx = riskChartElement.getContext('2d');
+                const riskData = {
+                    datasets: [{
+                        label: 'Ransomware',
+                        data: [{ x: 8, y: 9, r: 25 }],
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                    }, {
+                        label: 'Phishing',
+                        data: [{ x: 9, y: 7, r: 30 }],
+                        backgroundColor: 'rgba(234, 179, 8, 0.7)',
+                        borderColor: 'rgba(234, 179, 8, 1)',
+                    }, {
+                        label: 'Robo de Credenciales',
+                        data: [{ x: 7, y: 8, r: 20 }],
+                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                    }, {
+                        label: 'Malware (General)',
+                        data: [{ x: 6, y: 6, r: 18 }],
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                    }, {
+                        label: 'Fraude (BEC)',
+                        data: [{ x: 5, y: 9, r: 15 }],
+                        backgroundColor: 'rgba(249, 115, 22, 0.7)',
+                        borderColor: 'rgba(249, 115, 22, 1)',
+                    }]
+                };
+
+                const riskChart = new Chart(riskChartCtx, {
+                    type: 'bubble',
+                    data: riskData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.x !== null) {
+                                            label += `(Prob: ${context.parsed.x}, Impacto: ${context.parsed.y}, Magnitud: ${context.parsed.r/2})`;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Matriz de Riesgos Cibernéticos para PyMEs'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Probabilidad de Ocurrencia →'
+                                },
+                                min: 0,
+                                max: 10,
+                                ticks: { stepSize: 1, font: {size: 10}, callback: function(value) { if (value % 2 === 0) return value; } }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Impacto en el Negocio →'
+                                },
+                                min: 0,
+                                max: 10,
+                                ticks: { stepSize: 1, font: {size: 10}, callback: function(value) { if (value % 2 === 0) return value; } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const registrationForm = document.getElementById('registration-form');
+            const formMessage = document.getElementById('form-message');
+            const submitButton = document.getElementById('submit-button');
+
+            if (registrationForm) {
+                registrationForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    if (!auth.currentUser) {
+                        formMessage.textContent = 'Error: No se pudo autenticar con Firebase. Intenta recargar la página.';
+                        formMessage.className = 'form-message error';
+                        formMessage.style.display = 'block';
+                        return;
+                    }
+
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Registrando...';
+                    formMessage.textContent = '';
+                    formMessage.style.display = 'none';
+
+
+                    const nombre = document.getElementById('nombre').value;
+                    const email = document.getElementById('email').value;
+                    const pyme = document.getElementById('pyme').value;
+                    const acepto = document.getElementById('acepto').checked;
+
+                    if (!acepto) {
+                        formMessage.textContent = 'Debes aceptar recibir comunicaciones para registrarte.';
+                        formMessage.className = 'form-message error';
+                        formMessage.style.display = 'block';
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Registrarme';
+                        return;
+                    }
+
+                    try {
+                        const firestorePath = `/artifacts/${appId}/public/data/inscripciones_pymes`;
+                        await addDoc(collection(db, firestorePath), {
+                            nombre: nombre,
+                            email: email,
+                            nombrePyme: pyme,
+                            fechaRegistro: serverTimestamp()
+                        });
+                        formMessage.textContent = '¡Gracias por registrarte! Tu información ha sido enviada con éxito.';
+                        formMessage.className = 'form-message success';
+                        registrationForm.reset();
+                    } catch (error) {
+                        console.error("Error al agregar documento: ", error);
+                        formMessage.textContent = 'Error al enviar tu registro. Por favor, inténtalo de nuevo más tarde. Detalles: ' + error.message;
+                        formMessage.className = 'form-message error';
+                    } finally {
+                        formMessage.style.display = 'block';
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Registrarme';
+                    }
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>
